@@ -1,0 +1,1481 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800;900&display=swap');
+
+:root {
+    /* ZAP core colors */
+    --zap-yellow: #FFD503;
+    --zap-yellow-bright: #FFEA00;
+    --zap-pink: #E91E8C;
+    --zap-pink-light: #FF4DB8;
+    --zap-black: #000000;
+    --zap-dark: #0a0a0a;
+    --zap-dark-2: #111111;
+
+    /* World Cup 2026 accent colors */
+    --wc-red: #E5173F;       /* Canada / Maple */
+    --wc-green: #00843D;     /* Mexico / Zayu */
+    --wc-blue: #002868;      /* USA / Clutch */
+    --wc-gold: #D4AF37;      /* Trophy gold */
+    --wc-field: #1B5E20;     /* Stadium grass */
+
+    /* UI tokens */
+    --glass: rgba(10, 10, 10, 0.88);
+    --glass-border: rgba(255, 213, 3, 0.4);
+    --text: #ffffff;
+    --text-muted: #bbbbbb;
+    --success: #00ff88;
+    --danger: #ff4444;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Outfit', sans-serif;
+}
+
+body {
+    background: #0a0f1a;
+    background-image:
+        /* Stadium-field gradient at center */
+        radial-gradient(ellipse at 50% 120%, rgba(27, 94, 32, 0.35) 0%, transparent 55%),
+        /* World Cup red glow - Canada */
+        radial-gradient(circle at 15% 15%, rgba(229, 23, 63, 0.20) 0%, transparent 40%),
+        /* World Cup blue glow - USA */
+        radial-gradient(circle at 85% 25%, rgba(0, 40, 104, 0.25) 0%, transparent 40%),
+        /* ZAP yellow flare */
+        radial-gradient(circle at 50% 0%, rgba(255, 213, 3, 0.12) 0%, transparent 50%),
+        /* World Cup green glow - Mexico */
+        radial-gradient(circle at 80% 85%, rgba(0, 132, 61, 0.18) 0%, transparent 40%),
+        /* Dark base */
+        linear-gradient(180deg, #080d18 0%, #0d1525 50%, #0a1018 100%);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow-x: hidden;
+    padding: 20px;
+}
+
+/* Animated "stadium lights" sweep */
+body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background:
+        conic-gradient(from 0deg at 50% -10%, rgba(255, 213, 3, 0.06) 0deg, transparent 45deg, transparent 315deg, rgba(255, 213, 3, 0.06) 360deg);
+    animation: stadiumSweep 8s ease-in-out infinite alternate;
+    pointer-events: none;
+    z-index: 0;
+}
+
+@keyframes stadiumSweep {
+    0%   { opacity: 0.4; transform: rotate(-5deg); }
+    100% { opacity: 1; transform: rotate(5deg); }
+}
+
+/* Football-field lines overlay */
+body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+        /* Center circle hint */
+        radial-gradient(circle at 50% 50%, transparent 140px, rgba(255,255,255,0.015) 141px, rgba(255,255,255,0.015) 142px, transparent 143px),
+        /* Midfield line hint */
+        linear-gradient(0deg, transparent 49.8%, rgba(255,255,255,0.02) 49.8%, rgba(255,255,255,0.02) 50.2%, transparent 50.2%);
+    pointer-events: none;
+    z-index: 0;
+}
+
+#app {
+    width: 100%;
+    max-width: 480px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    position: relative;
+    z-index: 1;
+}
+
+.hidden {
+    display: none !important;
+}
+
+/* ========================
+   FLOATING FOOTBALL PARTICLES
+======================== */
+@keyframes floatBall {
+    0%   { transform: translateY(100vh) rotate(0deg); opacity: 0; }
+    10%  { opacity: 0.15; }
+    90%  { opacity: 0.15; }
+    100% { transform: translateY(-10vh) rotate(720deg); opacity: 0; }
+}
+
+/* ========================
+   POPUP OVERLAY
+======================== */
+.popup-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.88);
+    backdrop-filter: blur(10px);
+    z-index: 9999;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    animation: fadeInOverlay 0.4s ease;
+    padding: 20px;
+}
+
+@keyframes fadeInOverlay {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}
+
+.popup-box {
+    background: linear-gradient(160deg, #0d1525 0%, #0a0f1a 60%, #111a0d 100%);
+    border: 2px solid var(--zap-yellow);
+    border-radius: 24px;
+    padding: 36px 28px;
+    max-width: 380px;
+    width: 100%;
+    text-align: center;
+    box-shadow:
+        0 0 60px rgba(255, 213, 3, 0.4),
+        0 0 120px rgba(229, 23, 63, 0.15),
+        0 0 80px rgba(0, 132, 61, 0.1),
+        0 30px 60px rgba(0, 0, 0, 0.8);
+    animation: popupEntrance 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+    position: relative;
+    overflow: hidden;
+}
+
+.popup-box::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, var(--wc-red), var(--zap-yellow), var(--wc-green), var(--wc-blue), var(--zap-yellow), var(--wc-red));
+    background-size: 300%;
+    animation: shimmerWC 3s linear infinite;
+}
+
+@keyframes shimmerWC {
+    0%   { background-position: -300% center; }
+    100% { background-position: 300% center; }
+}
+
+/* Keep original shimmer for fallback */
+@keyframes shimmer {
+    0%   { background-position: -200% center; }
+    100% { background-position: 200% center; }
+}
+
+@keyframes popupEntrance {
+    from { opacity: 0; transform: scale(0.7) translateY(40px); }
+    to   { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+.popup-icon {
+    font-size: 3.5rem;
+    margin-bottom: 12px;
+    animation: bounce 0.8s ease infinite alternate;
+    display: block;
+}
+
+@keyframes bounce {
+    from { transform: translateY(0); }
+    to   { transform: translateY(-8px); }
+}
+
+.popup-tag {
+    display: inline-block;
+    background: linear-gradient(135deg, var(--wc-red), var(--zap-pink));
+    color: white;
+    font-size: 0.7rem;
+    font-weight: 800;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    padding: 4px 12px;
+    border-radius: 100px;
+    margin-bottom: 16px;
+}
+
+.popup-title {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: var(--text-muted);
+    margin-bottom: 8px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.popup-amount {
+    font-size: 3.2rem;
+    font-weight: 900;
+    color: var(--zap-yellow);
+    text-shadow:
+        0 0 20px rgba(255, 213, 3, 0.8),
+        0 0 40px rgba(255, 213, 3, 0.4);
+    line-height: 1;
+    margin-bottom: 8px;
+    letter-spacing: -1px;
+}
+
+.popup-subtitle {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    margin-bottom: 28px;
+    line-height: 1.5;
+}
+
+.popup-subtitle strong {
+    color: var(--zap-pink-light);
+}
+
+.btn-popup {
+    width: 100%;
+    background: linear-gradient(135deg, var(--wc-red), #b8102e);
+    color: white;
+    border: none;
+    padding: 18px;
+    border-radius: 14px;
+    font-size: 1.05rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 8px 25px rgba(229, 23, 63, 0.5);
+    position: relative;
+    overflow: hidden;
+}
+
+.btn-popup::after {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -60%;
+    width: 40%;
+    height: 200%;
+    background: rgba(255, 255, 255, 0.2);
+    transform: skewX(-20deg);
+    animation: btnShine 2.5s ease infinite;
+}
+
+@keyframes btnShine {
+    0%   { left: -60%; }
+    100% { left: 150%; }
+}
+
+.btn-popup:hover {
+    transform: translateY(-3px) scale(1.02);
+    box-shadow: 0 15px 35px rgba(229, 23, 63, 0.7);
+}
+
+/* Earn Popup Variant */
+.earn-popup-overlay {
+    animation: fadeInOverlay 0.3s ease;
+}
+
+.earn-popup-box {
+    border-color: var(--wc-gold);
+    box-shadow:
+        0 0 60px rgba(212, 175, 55, 0.5),
+        0 0 120px rgba(255, 213, 3, 0.2),
+        0 30px 60px rgba(0, 0, 0, 0.8);
+}
+
+.earn-popup-box::before {
+    background: linear-gradient(90deg, var(--wc-gold), var(--zap-yellow), #fff700, var(--zap-yellow), var(--wc-gold));
+    background-size: 300%;
+}
+
+.earn-total-label {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    margin-bottom: 20px;
+    padding: 8px 14px;
+    background: rgba(212, 175, 55, 0.08);
+    border-radius: 10px;
+    border: 1px solid rgba(212, 175, 55, 0.25);
+}
+
+.btn-popup-earn {
+    background: linear-gradient(135deg, var(--wc-green), #006830) !important;
+    box-shadow: 0 8px 25px rgba(0, 132, 61, 0.45) !important;
+}
+
+.btn-popup-earn:hover {
+    box-shadow: 0 15px 35px rgba(0, 132, 61, 0.7) !important;
+}
+
+/* ========================
+   HEADER
+======================== */
+.header {
+    background: linear-gradient(160deg, #0d1525, #0a0f1a);
+    backdrop-filter: blur(10px);
+    border-radius: 20px;
+    padding: 14px 20px;
+    border: 1.5px solid rgba(255, 213, 3, 0.5);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    box-shadow:
+        0 0 30px rgba(255, 213, 3, 0.12),
+        0 0 20px rgba(0, 132, 61, 0.08),
+        0 10px 30px rgba(0, 0, 0, 0.5);
+    position: relative;
+    overflow: hidden;
+}
+
+/* World Cup tricolor accent on header */
+.header::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--wc-red), var(--zap-yellow), var(--wc-green), var(--wc-blue));
+}
+
+.offer-banner {
+    background: linear-gradient(90deg, var(--wc-red), #b8102e, var(--wc-red)) !important;
+    color: white !important;
+    padding: 7px 12px !important;
+    text-align: center;
+    font-size: 0.82rem !important;
+    font-weight: 700 !important;
+    width: 100%;
+    border-radius: 10px;
+    letter-spacing: 0.3px;
+    position: relative;
+    overflow: hidden;
+}
+
+.offer-banner::before {
+    content: '⚽';
+    position: absolute;
+    left: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 0.9rem;
+    animation: spinBall 3s linear infinite;
+}
+
+@keyframes spinBall {
+    from { transform: translateY(-50%) rotate(0deg); }
+    to   { transform: translateY(-50%) rotate(360deg); }
+}
+
+.logo {
+    font-size: 1.9rem;
+    font-weight: 900;
+    text-align: center;
+    letter-spacing: 3px;
+    color: var(--zap-yellow);
+    text-shadow: 0 0 20px rgba(255, 213, 3, 0.4);
+}
+
+.highlight {
+    color: var(--wc-green);
+    text-shadow: 0 0 20px rgba(0, 132, 61, 0.5);
+}
+
+/* World Cup edition sub-brand */
+.wc-subtitle {
+    display: block;
+    font-size: 0.55rem;
+    font-weight: 800;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    text-shadow: none;
+    margin-top: -2px;
+}
+
+.earnings-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: rgba(212, 175, 55, 0.06);
+    padding: 10px 16px;
+    border-radius: 12px;
+    border: 1px solid rgba(212, 175, 55, 0.2);
+}
+
+.earnings-label {
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.earnings-amount {
+    font-size: 1.2rem;
+    font-weight: 800;
+    color: var(--wc-gold);
+    text-shadow: 0 0 12px rgba(212, 175, 55, 0.5);
+}
+
+.progress-bar-container {
+    width: 100%;
+    height: 6px;
+    background: rgba(255, 255, 255, 0.06);
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.progress-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--wc-green), var(--zap-yellow), var(--wc-red));
+    width: 0%;
+    transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 0 10px var(--zap-yellow);
+}
+
+/* ========================
+   CARD
+======================== */
+.glass-card {
+    background: linear-gradient(160deg, rgba(13, 21, 37, 0.97), rgba(10, 15, 26, 0.98));
+    border: 1.5px solid rgba(255, 213, 3, 0.25);
+    border-radius: 24px;
+    position: relative;
+    box-shadow:
+        0 20px 60px rgba(0, 0, 0, 0.6),
+        0 0 40px rgba(255, 213, 3, 0.06),
+        0 0 30px rgba(0, 132, 61, 0.04);
+    overflow: hidden;
+}
+
+.glass-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--wc-red), var(--zap-yellow), var(--wc-green), var(--wc-blue), var(--zap-yellow), var(--wc-red));
+    background-size: 300%;
+    animation: shimmerWC 4s linear infinite;
+}
+
+.card-content {
+    padding: 30px 22px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+}
+
+/* ========================
+   INTRO SCREEN
+======================== */
+.intro-logo {
+    width: 110px;
+    height: 110px;
+    object-fit: contain;
+    margin-bottom: 20px;
+    border-radius: 50%;
+    border: 3px solid var(--wc-gold);
+    box-shadow:
+        0 0 30px rgba(212, 175, 55, 0.5),
+        0 0 60px rgba(0, 132, 61, 0.15);
+}
+
+.intro-title {
+    color: var(--zap-yellow);
+    font-size: 1.6rem;
+    font-weight: 900;
+    margin-bottom: 12px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    text-shadow: 0 0 20px rgba(255, 213, 3, 0.4);
+}
+
+.intro-text {
+    color: var(--text-muted);
+    margin-bottom: 28px;
+    line-height: 1.7;
+    font-size: 0.95rem;
+}
+
+/* ========================
+   PRESENTER / PLAYER CARD
+======================== */
+.presenter-img-container {
+    width: 170px;
+    height: 170px;
+    border-radius: 50%;
+    padding: 4px;
+    background: linear-gradient(135deg, var(--wc-red), var(--zap-yellow), var(--wc-green));
+    margin-bottom: 20px;
+    box-shadow:
+        0 0 30px rgba(255, 213, 3, 0.25),
+        0 0 40px rgba(229, 23, 63, 0.15),
+        0 0 50px rgba(0, 132, 61, 0.1);
+    animation: ringPulse 3s ease-in-out infinite;
+}
+
+@keyframes ringPulse {
+    0%, 100% { box-shadow: 0 0 30px rgba(255,213,3,0.25), 0 0 40px rgba(229,23,63,0.15), 0 0 50px rgba(0,132,61,0.1); }
+    50%      { box-shadow: 0 0 40px rgba(255,213,3,0.35), 0 0 55px rgba(229,23,63,0.2), 0 0 65px rgba(0,132,61,0.15); }
+}
+
+.presenter-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 50%;
+    border: 4px solid #0a0f1a;
+}
+
+.presenter-name {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin-bottom: 20px;
+    color: var(--zap-yellow);
+    text-shadow: 0 0 15px rgba(255, 213, 3, 0.3);
+}
+
+/* ========================
+   BUTTONS
+======================== */
+.btn-group {
+    display: flex;
+    gap: 12px;
+    width: 100%;
+    margin-bottom: 20px;
+}
+
+.btn-option {
+    background: rgba(255, 255, 255, 0.04);
+    border: 1.5px solid rgba(255, 255, 255, 0.12);
+    color: var(--text);
+    padding: 13px 20px;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    flex: 1;
+    font-weight: 700;
+    font-size: 0.95rem;
+}
+
+.btn-option:hover {
+    background: rgba(255, 213, 3, 0.08);
+    border-color: var(--zap-yellow);
+    color: var(--zap-yellow);
+}
+
+.btn-option.selected {
+    background: linear-gradient(135deg, var(--zap-yellow), #FFC200);
+    color: #000;
+    border-color: var(--zap-yellow);
+    box-shadow: 0 0 20px rgba(255, 213, 3, 0.5);
+    font-weight: 800;
+}
+
+/* Star Rating */
+.star-rating {
+    display: flex;
+    gap: 6px;
+    justify-content: center;
+    flex-direction: row-reverse;
+    margin-bottom: 22px;
+}
+
+.star-rating input {
+    display: none;
+}
+
+.star-rating label {
+    cursor: pointer;
+    color: #222;
+    font-size: 2.4rem;
+    transition: all 0.2s;
+}
+
+.star-rating input:checked~label,
+.star-rating label:hover,
+.star-rating label:hover~label {
+    color: var(--wc-gold);
+    transform: scale(1.15);
+    text-shadow: 0 0 10px rgba(212, 175, 55, 0.7);
+}
+
+/* Main Action Button */
+.btn-action {
+    width: 100%;
+    background: linear-gradient(135deg, var(--zap-yellow), #FFC200);
+    color: #000;
+    border: none;
+    padding: 18px;
+    border-radius: 14px;
+    font-size: 1.05rem;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    cursor: pointer;
+    transition: all 0.3s;
+    box-shadow: 0 6px 20px rgba(255, 213, 3, 0.35);
+    position: relative;
+    overflow: hidden;
+}
+
+.btn-action::after {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -60%;
+    width: 40%;
+    height: 200%;
+    background: rgba(255, 255, 255, 0.25);
+    transform: skewX(-20deg);
+    animation: btnShine 3s ease infinite;
+}
+
+.btn-action:hover:not(:disabled) {
+    transform: translateY(-3px);
+    box-shadow: 0 12px 30px rgba(255, 213, 3, 0.55);
+}
+
+.btn-action:disabled {
+    background: #1a1a1a;
+    color: #444;
+    cursor: not-allowed;
+    box-shadow: none;
+}
+
+.btn-action:disabled::after {
+    display: none;
+}
+
+/* ========================
+   WITHDRAWAL
+======================== */
+.withdrawal-options {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    width: 100%;
+    margin: 20px 0;
+}
+
+.withdrawal-card {
+    background: rgba(212, 175, 55, 0.05);
+    border: 1.5px solid rgba(212, 175, 55, 0.2);
+    padding: 18px 20px;
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.withdrawal-card:hover {
+    background: linear-gradient(135deg, var(--zap-yellow), var(--wc-gold));
+    color: #000;
+    border-color: var(--zap-yellow);
+    transform: translateY(-2px);
+    box-shadow: 0 10px 25px rgba(255, 213, 3, 0.35);
+}
+
+.withdrawal-icon {
+    font-size: 1.6rem;
+}
+
+/* Spinner */
+.spinner {
+    width: 52px;
+    height: 52px;
+    border: 5px solid rgba(255, 213, 3, 0.12);
+    border-top: 5px solid var(--wc-red);
+    border-right: 5px solid var(--wc-green);
+    border-bottom: 5px solid var(--wc-blue);
+    border-radius: 50%;
+    animation: spin 0.9s linear infinite;
+    margin: 20px auto;
+}
+
+@keyframes spin {
+    0%   { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* ========================
+   ANIMATIONS
+======================== */
+.animate-entry {
+    animation: slideIn 0.45s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+@keyframes slideIn {
+    from { opacity: 0; transform: translateY(24px) scale(0.97); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.money-float {
+    position: absolute;
+    color: var(--wc-gold);
+    font-size: 1.4rem;
+    font-weight: 900;
+    pointer-events: none;
+    animation: floatUp 1.2s ease-out forwards;
+    text-shadow: 0 0 15px rgba(212, 175, 55, 0.8);
+    z-index: 100;
+}
+
+@keyframes floatUp {
+    0%   { opacity: 1; transform: translate(-50%, -50%); }
+    100% { opacity: 0; transform: translate(-50%, -150px) scale(1.3); }
+}
+
+.alert-box {
+    background: rgba(255, 68, 68, 0.08);
+    border: 1.5px solid var(--danger);
+    color: #ffaaaa;
+    padding: 16px;
+    border-radius: 12px;
+    margin-top: 18px;
+    font-size: 0.9rem;
+    line-height: 1.5;
+}
+
+/* ========================
+   PINK ACCENT BADGE (now WC themed)
+======================== */
+.pink-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(229, 23, 63, 0.12);
+    border: 1px solid rgba(229, 23, 63, 0.35);
+    color: #ff6b8a;
+    font-size: 0.78rem;
+    font-weight: 700;
+    padding: 5px 12px;
+    border-radius: 100px;
+    margin-bottom: 16px;
+    letter-spacing: 0.5px;
+}
+
+/* WC edition badge */
+.wc-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: linear-gradient(135deg, rgba(0, 132, 61, 0.15), rgba(0, 40, 104, 0.15));
+    border: 1px solid rgba(0, 132, 61, 0.3);
+    color: #4dffaa;
+    font-size: 0.72rem;
+    font-weight: 700;
+    padding: 5px 14px;
+    border-radius: 100px;
+    margin-bottom: 10px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+}
+
+/* ========================
+   QUESTION BLOCKS
+======================== */
+.questions-wrap {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    margin-bottom: 22px;
+}
+
+.q-block {
+    width: 100%;
+    background: rgba(255, 255, 255, 0.025);
+    border: 1px solid rgba(255, 213, 3, 0.10);
+    border-radius: 16px;
+    padding: 16px 14px 12px;
+    animation: slideIn 0.4s ease both;
+}
+
+.q-label {
+    font-size: 0.92rem;
+    font-weight: 600;
+    color: #ddd;
+    margin-bottom: 12px;
+    text-align: left;
+    line-height: 1.4;
+}
+
+.animate-q {
+    animation: slideIn 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* Step Indicator */
+.card-step-indicator {
+    color: var(--wc-gold);
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+    background: rgba(212, 175, 55, 0.08);
+    border: 1px solid rgba(212, 175, 55, 0.2);
+    padding: 4px 14px;
+    border-radius: 100px;
+}
+
+/* Trio btn group */
+.btn-group.trio {
+    gap: 8px;
+}
+
+.btn-group.trio .btn-option {
+    padding: 11px 8px;
+    font-size: 0.82rem;
+}
+
+/* ========================
+   PILL BUTTONS
+======================== */
+.pill-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: center;
+}
+
+.pill-btn {
+    background: rgba(255, 255, 255, 0.04);
+    border: 1.5px solid rgba(255, 213, 3, 0.15);
+    color: var(--text-muted);
+    padding: 10px 14px;
+    border-radius: 100px;
+    cursor: pointer;
+    font-size: 0.82rem;
+    font-weight: 600;
+    transition: all 0.25s ease;
+    white-space: nowrap;
+}
+
+.pill-btn:hover {
+    border-color: var(--zap-yellow);
+    color: var(--zap-yellow);
+    background: rgba(255, 213, 3, 0.06);
+}
+
+.pill-btn.selected {
+    background: linear-gradient(135deg, var(--zap-yellow), #FFC200);
+    color: #000;
+    border-color: var(--zap-yellow);
+    font-weight: 800;
+    box-shadow: 0 4px 14px rgba(255, 213, 3, 0.4);
+    transform: scale(1.04);
+}
+
+/* ========================
+   EMOJI PICKER
+======================== */
+.emoji-picker {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+}
+
+.emoji-btn {
+    background: rgba(255, 255, 255, 0.04);
+    border: 1.5px solid rgba(255, 255, 255, 0.08);
+    border-radius: 12px;
+    font-size: 1.8rem;
+    padding: 8px 10px;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    line-height: 1;
+}
+
+.emoji-btn:hover {
+    transform: scale(1.25) translateY(-3px);
+    border-color: var(--wc-green);
+    background: rgba(0, 132, 61, 0.1);
+}
+
+.emoji-btn.selected {
+    border-color: var(--wc-green);
+    background: rgba(0, 132, 61, 0.18);
+    transform: scale(1.3) translateY(-4px);
+    box-shadow: 0 6px 20px rgba(0, 132, 61, 0.4);
+}
+
+/* ========================
+   FREQUENCY BAR
+======================== */
+.freq-bar {
+    display: flex;
+    width: 100%;
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1.5px solid rgba(255, 213, 3, 0.15);
+    gap: 1px;
+    background: rgba(255, 213, 3, 0.08);
+}
+
+.freq-btn {
+    flex: 1;
+    background: rgba(0, 0, 0, 0.5);
+    border: none;
+    color: var(--text-muted);
+    padding: 11px 6px;
+    cursor: pointer;
+    font-size: 0.76rem;
+    font-weight: 600;
+    transition: all 0.25s ease;
+    text-align: center;
+}
+
+.freq-btn:hover {
+    background: rgba(255, 213, 3, 0.12);
+    color: var(--zap-yellow);
+}
+
+.freq-btn.selected {
+    background: linear-gradient(135deg, var(--zap-yellow), #FFC200);
+    color: #000;
+    font-weight: 800;
+}
+
+/* ========================
+   CUSTOM SLIDER
+======================== */
+.slider-wrap {
+    width: 100%;
+    padding: 4px 0 8px;
+}
+
+.custom-slider {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100%;
+    height: 6px;
+    border-radius: 4px;
+    background: rgba(255, 213, 3, 0.15);
+    outline: none;
+    margin-bottom: 10px;
+}
+
+.custom-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--wc-gold), var(--zap-yellow));
+    cursor: pointer;
+    box-shadow: 0 0 12px rgba(212, 175, 55, 0.6);
+    transition: box-shadow 0.2s;
+}
+
+.custom-slider::-webkit-slider-thumb:hover {
+    box-shadow: 0 0 20px rgba(212, 175, 55, 0.9);
+}
+
+.slider-labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.7rem;
+    color: var(--text-muted);
+}
+
+#slider-val {
+    font-weight: 900;
+    color: var(--wc-gold);
+    font-size: 1rem;
+}
+
+/* ========================
+   THERMOMETER / MOOD SCALE
+======================== */
+.thermo-wrap {
+    text-align: center;
+}
+
+.thermo-track {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.thermo-btn {
+    background: rgba(255, 255, 255, 0.04);
+    border: 1.5px solid rgba(255, 255, 255, 0.08);
+    border-radius: 50%;
+    font-size: 1.5rem;
+    width: 50px;
+    height: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.thermo-btn:hover {
+    transform: scale(1.2);
+    border-color: var(--wc-green);
+}
+
+.thermo-btn.selected {
+    background: linear-gradient(135deg, var(--wc-green), var(--zap-yellow));
+    border-color: transparent;
+    transform: scale(1.25);
+    box-shadow: 0 4px 16px rgba(0, 132, 61, 0.5);
+}
+
+.thermo-label {
+    font-size: 0.82rem;
+    color: var(--wc-gold);
+    font-weight: 700;
+    min-height: 1.2em;
+}
+
+/* ========================
+   VOTE BUTTONS
+======================== */
+.vote-wrap {
+    display: flex;
+    gap: 12px;
+    width: 100%;
+}
+
+.vote-btn {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    padding: 16px 10px;
+    border-radius: 14px;
+    border: 1.5px solid rgba(255, 255, 255, 0.08);
+    cursor: pointer;
+    font-weight: 700;
+    font-size: 0.85rem;
+    transition: all 0.3s ease;
+    background: rgba(255, 255, 255, 0.03);
+    color: var(--text-muted);
+}
+
+.vote-btn .vote-icon {
+    font-size: 1.8rem;
+    transition: transform 0.3s;
+}
+
+.vote-btn.yes:hover,
+.vote-btn.yes.selected {
+    background: rgba(0, 132, 61, 0.15);
+    border-color: var(--wc-green);
+    color: #4dffaa;
+}
+
+.vote-btn.no:hover,
+.vote-btn.no.selected {
+    background: rgba(229, 23, 63, 0.15);
+    border-color: var(--wc-red);
+    color: #ff6b8a;
+}
+
+.vote-btn.selected .vote-icon {
+    transform: scale(1.3);
+}
+
+/* Ready state on btn-action */
+.btn-action.ready {
+    animation: pulseCTA 1.5s ease infinite;
+}
+
+@keyframes pulseCTA {
+    0%, 100% { box-shadow: 0 6px 20px rgba(255, 213, 3, 0.35); }
+    50%      { box-shadow: 0 8px 30px rgba(255, 213, 3, 0.7), 0 0 40px rgba(255, 213, 3, 0.3); }
+}
+
+/* ========================
+   WORLD CUP SPECIFIC COMPONENTS
+======================== */
+
+/* Team flag badge - used in WC questions */
+.team-flag-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+    width: 100%;
+}
+
+.team-flag-btn {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1.5px solid rgba(255, 255, 255, 0.08);
+    border-radius: 14px;
+    padding: 12px 14px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    color: var(--text-muted);
+    font-weight: 600;
+    font-size: 0.88rem;
+}
+
+.team-flag-btn:hover {
+    background: rgba(255, 213, 3, 0.06);
+    border-color: var(--zap-yellow);
+    color: var(--zap-yellow);
+}
+
+.team-flag-btn.selected {
+    background: linear-gradient(135deg, rgba(255, 213, 3, 0.15), rgba(0, 132, 61, 0.1));
+    border-color: var(--zap-yellow);
+    color: #fff;
+    box-shadow: 0 4px 16px rgba(255, 213, 3, 0.3);
+}
+
+.team-flag-btn .flag-emoji {
+    font-size: 1.6rem;
+    line-height: 1;
+}
+
+/* Match Score Card */
+.match-card {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1.5px solid rgba(212, 175, 55, 0.15);
+    border-radius: 16px;
+    padding: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    margin-bottom: 12px;
+    width: 100%;
+}
+
+.match-team {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    font-weight: 700;
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    min-width: 60px;
+}
+
+.match-team .flag-emoji {
+    font-size: 2rem;
+}
+
+.match-vs {
+    font-weight: 900;
+    font-size: 0.7rem;
+    color: var(--wc-gold);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+}
+
+/* Group stage mini table */
+.group-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.78rem;
+    margin-bottom: 12px;
+}
+
+.group-table th {
+    background: rgba(212, 175, 55, 0.1);
+    color: var(--wc-gold);
+    padding: 8px 10px;
+    text-align: left;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    border-bottom: 1px solid rgba(212, 175, 55, 0.15);
+}
+
+.group-table td {
+    padding: 7px 10px;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+    color: var(--text-muted);
+}
+
+.group-table tr:hover td {
+    background: rgba(255, 213, 3, 0.04);
+}
+
+/* Mascot selector */
+.mascot-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    width: 100%;
+}
+
+.mascot-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1.5px solid rgba(255, 255, 255, 0.08);
+    border-radius: 16px;
+    padding: 14px 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    color: var(--text-muted);
+    font-weight: 600;
+    font-size: 0.72rem;
+    text-align: center;
+}
+
+.mascot-btn .mascot-emoji {
+    font-size: 2rem;
+}
+
+.mascot-btn:hover {
+    transform: translateY(-3px);
+    border-color: var(--zap-yellow);
+}
+
+.mascot-btn.selected {
+    border-color: transparent;
+    transform: translateY(-3px) scale(1.04);
+    box-shadow: 0 6px 20px rgba(0,0,0,0.4);
+}
+
+.mascot-btn.mascot-canada.selected {
+    background: linear-gradient(135deg, rgba(229, 23, 63, 0.25), rgba(229, 23, 63, 0.1));
+    border-color: var(--wc-red);
+}
+
+.mascot-btn.mascot-mexico.selected {
+    background: linear-gradient(135deg, rgba(0, 132, 61, 0.25), rgba(0, 132, 61, 0.1));
+    border-color: var(--wc-green);
+}
+
+.mascot-btn.mascot-usa.selected {
+    background: linear-gradient(135deg, rgba(0, 40, 104, 0.35), rgba(0, 40, 104, 0.15));
+    border-color: var(--wc-blue);
+}
+
+/* WC Trivia ticker */
+.wc-ticker {
+    width: 100%;
+    overflow: hidden;
+    background: rgba(212, 175, 55, 0.05);
+    border: 1px solid rgba(212, 175, 55, 0.12);
+    border-radius: 10px;
+    padding: 8px 0;
+    margin-bottom: 16px;
+}
+
+.wc-ticker-inner {
+    display: flex;
+    white-space: nowrap;
+    animation: tickerScroll 20s linear infinite;
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: var(--wc-gold);
+    letter-spacing: 0.5px;
+}
+
+@keyframes tickerScroll {
+    0%   { transform: translateX(100%); }
+    100% { transform: translateX(-100%); }
+}
+
+/* Stadium atmosphere gradient border animation */
+@keyframes stadiumGlow {
+    0%, 100% { border-color: rgba(229, 23, 63, 0.3); }
+    33%      { border-color: rgba(255, 213, 3, 0.4); }
+    66%      { border-color: rgba(0, 132, 61, 0.3); }
+}
+
+/* Goal celebration animation */
+@keyframes goalCelebration {
+    0%   { transform: scale(1) rotate(0deg); }
+    25%  { transform: scale(1.3) rotate(-5deg); }
+    50%  { transform: scale(1.1) rotate(5deg); }
+    75%  { transform: scale(1.25) rotate(-3deg); }
+    100% { transform: scale(1) rotate(0deg); }
+}
+
+.goal-celebration {
+    animation: goalCelebration 0.8s ease-in-out;
+}
+
+/* Host city badge */
+.host-city-tag {
+    display: inline-block;
+    background: rgba(0, 40, 104, 0.15);
+    border: 1px solid rgba(0, 40, 104, 0.3);
+    color: #6aa3ff;
+    font-size: 0.68rem;
+    font-weight: 700;
+    padding: 3px 10px;
+    border-radius: 100px;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+}
+
+/* ========================
+   RESPONSIVE
+======================== */
+@media (max-width: 400px) {
+    .team-flag-grid {
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+    }
+
+    .team-flag-btn {
+        padding: 10px 10px;
+        font-size: 0.8rem;
+    }
+
+    .mascot-grid {
+        gap: 8px;
+    }
+
+    .mascot-btn {
+        padding: 10px 6px;
+    }
+}
+
+/* ========================
+   WORLD CUP LOGO & TRANSITIONS
+   ======================== */
+.logo-wrapper {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    padding: 10px 0;
+}
+
+.zap-wc-logo {
+    width: 100%;
+    max-width: 280px;
+    height: auto;
+    display: block;
+}
+
+/* World Cup TV Transition Overlay */
+.wc-transition-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 99999;
+    pointer-events: none;
+    display: none;
+    overflow: hidden;
+}
+
+/* Wipes */
+.wc-wipe {
+    position: absolute;
+    top: 0;
+    width: 150%;
+    height: 100%;
+    transform: skewX(-15deg) translateX(-110%);
+    transition: transform 0.8s cubic-bezier(0.77, 0, 0.175, 1);
+}
+
+.wc-wipe-1 {
+    background: linear-gradient(90deg, var(--wc-green), #00a84f);
+    z-index: 1;
+}
+
+.wc-wipe-2 {
+    background: linear-gradient(90deg, var(--wc-red), #ff2e5b);
+    z-index: 2;
+    transition-delay: 0.1s;
+}
+
+.wc-wipe-3 {
+    background: linear-gradient(90deg, #0a0f1a, #152035);
+    z-index: 3;
+    transition-delay: 0.2s;
+}
+
+/* Logo container */
+.wc-transition-logo-container {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0);
+    z-index: 4;
+    opacity: 0;
+    transition: all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+    transition-delay: 0.3s;
+}
+
+.wc-transition-logo {
+    width: 280px;
+    height: auto;
+    filter: drop-shadow(0 0 30px rgba(255, 213, 3, 0.6));
+}
+
+/* Trigger animation IN */
+.wc-transition-overlay.active {
+    display: block;
+    pointer-events: auto;
+}
+
+.wc-transition-overlay.active .wc-wipe {
+    transform: skewX(-15deg) translateX(-10%);
+}
+
+.wc-transition-overlay.active .wc-transition-logo-container {
+    transform: translate(-50%, -50%) scale(1) rotate(360deg);
+    opacity: 1;
+}
+
+/* Trigger animation OUT */
+.wc-transition-overlay.active-out {
+    display: block;
+    pointer-events: auto;
+}
+
+.wc-transition-overlay.active-out .wc-wipe {
+    transform: skewX(-15deg) translateX(-10%);
+}
+
+.wc-transition-overlay.active-out .wc-transition-logo-container {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 1;
+}
+
+/* Immediately after render, start moving them out */
+.wc-transition-overlay.active-out.start-out .wc-wipe {
+    transform: skewX(-15deg) translateX(110%);
+    transition: transform 0.8s cubic-bezier(0.77, 0, 0.175, 1);
+}
+
+.wc-transition-overlay.active-out.start-out .wc-wipe-1 {
+    transition-delay: 0.2s;
+}
+
+.wc-transition-overlay.active-out.start-out .wc-wipe-2 {
+    transition-delay: 0.1s;
+}
+
+.wc-transition-overlay.active-out.start-out .wc-wipe-3 {
+    transition-delay: 0s;
+}
+
+.wc-transition-overlay.active-out.start-out .wc-transition-logo-container {
+    transform: translate(-50%, -50%) scale(0) rotate(-180deg);
+    opacity: 0;
+    transition: all 0.5s ease-in;
+    transition-delay: 0.1s;
+}
