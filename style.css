@@ -1362,9 +1362,11 @@ body::after {
 
 .zap-wc-logo {
     width: 100%;
-    max-width: 280px;
+    max-width: 170px;
     height: auto;
     display: block;
+    /* O fundo preto da imagem funde-se com o fundo escuro do header */
+    mix-blend-mode: screen;
 }
 
 /* World Cup TV Transition Overlay */
