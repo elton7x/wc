@@ -416,9 +416,12 @@ window.triggerInlineTransition = (callback) => {
             <div class="wc-wipe wc-wipe-2"></div>
             <div class="wc-wipe wc-wipe-3"></div>
             <div class="wc-wipe wc-wipe-4"></div>
+            <div class="wc-sweep"></div>
             <div class="wc-transition-logo-container">
+                <div class="wc-rays"></div>
                 <div class="wc-transition-logo">
                     ${ZAP_WC_LOGO_SVG}
+                    <div class="wc-shine"></div>
                 </div>
             </div>
         `;
@@ -444,8 +447,8 @@ window.triggerInlineTransition = (callback) => {
         setTimeout(() => {
             overlay.style.display = 'none';
             overlay.classList.remove('active-out', 'start-out');
-        }, 1000);
-    }, 950);
+        }, 750);
+    }, 1050);
 };
 
 // --- PENALTY SHOOTOUT GAME (MINI-JOGO REALISTA) ---
@@ -1000,20 +1003,25 @@ window.triggerWCTransition = (targetUrl) => {
             <div class="wc-wipe wc-wipe-2"></div>
             <div class="wc-wipe wc-wipe-3"></div>
             <div class="wc-wipe wc-wipe-4"></div>
+            <div class="wc-sweep"></div>
             <div class="wc-transition-logo-container">
+                <div class="wc-rays"></div>
                 <div class="wc-transition-logo">
                     ${ZAP_WC_LOGO_SVG}
+                    <div class="wc-shine"></div>
                 </div>
             </div>
         `;
         document.body.appendChild(overlay);
     }
     
+    overlay.style.display = 'block';
+    void overlay.offsetWidth;
     overlay.classList.add('active');
     
     setTimeout(() => {
         window.location.href = targetUrl;
-    }, 950);
+    }, 1050);
 };
 
 // ========================
