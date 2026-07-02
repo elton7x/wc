@@ -109,7 +109,6 @@ let currentIndex = 0;
 let earnings = 0;
 let primaryAnswer = null;
 let secondaryAnswer = null;
-const cashSound = new Audio('sounds/cash.mp3');
 const transitionSound = new Audio('sounds/transition.webm');
 transitionSound.volume = 0.9;
 
@@ -131,14 +130,186 @@ function playTransitionWithFade() {
         }, 60); // ~600ms no total de fade out
     }, 2000);
 }
-// ATENÇÃO: Para usar sons reais, coloque ficheiros 'whistle.mp3' e 'cheer.mp3'
-// na pasta 'sounds' e remova os comentários abaixo:
-/*
-const whistleSound = new Audio('sounds/whistle.mp3');
-whistleSound.volume = 0.5;
-const cheerSound = new Audio('sounds/cheer.mp3');
-cheerSound.volume = 0.6;
-*/
+
+// ============================================================
+// MOTOR DE ÁUDIO (Web Audio API) — efeitos sonoros sintetizados
+// de alta qualidade: torcida no GOL, vaia na falha e prémio.
+// ============================================================
+let _audioCtx = null;
+function getAudioCtx() {
+    if (!_audioCtx) {
+        try {
+            _audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        } catch (e) { return null; }
+    }
+    if (_audioCtx.state === 'suspended') _audioCtx.resume().catch(() => {});
+    return _audioCtx;
+}
+
+// Buffer de ruído branco reutilizável (base para a multidão)
+let _noiseBuffer = null;
+function getNoiseBuffer(ctx) {
+    if (_noiseBuffer) return _noiseBuffer;
+    const len = ctx.sampleRate * 3;
+    _noiseBuffer = ctx.createBuffer(1, len, ctx.sampleRate);
+    const data = _noiseBuffer.getChannelData(0);
+    for (let i = 0; i < len; i++) data[i] = Math.random() * 2 - 1;
+    return _noiseBuffer;
+}
+
+// Torcida em êxtase estilo estádio — "GOOOAL!"
+function playGoalRoar() {
+    const ctx = getAudioCtx();
+    if (!ctx) return;
+    const now = ctx.currentTime;
+    const master = ctx.createGain();
+    master.gain.value = 0.9;
+    master.connect(ctx.destination);
+
+    // 1) Rugido da multidão: ruído filtrado com crescendo
+    const noise = ctx.createBufferSource();
+    noise.buffer = getNoiseBuffer(ctx);
+    noise.loop = true;
+    const bp = ctx.createBiquadFilter();
+    bp.type = 'bandpass';
+    bp.frequency.setValueAtTime(500, now);
+    bp.frequency.exponentialRampToValueAtTime(1600, now + 0.5);
+    bp.Q.value = 0.7;
+    const roarGain = ctx.createGain();
+    roarGain.gain.setValueAtTime(0.001, now);
+    roarGain.gain.exponentialRampToValueAtTime(0.7, now + 0.35); // sobe rápido
+    roarGain.gain.setValueAtTime(0.7, now + 1.6);
+    roarGain.gain.exponentialRampToValueAtTime(0.001, now + 3.0); // decai lento
+    noise.connect(bp).connect(roarGain).connect(master);
+    noise.start(now);
+    noise.stop(now + 3.1);
+
+    // 2) Apito de festa / assobios agudos por cima
+    [1400, 1900, 2500].forEach((f, i) => {
+        const osc = ctx.createOscillator();
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(f, now);
+        osc.frequency.linearRampToValueAtTime(f * 1.05, now + 1.2);
+        const g = ctx.createGain();
+        g.gain.setValueAtTime(0, now + 0.1 + i * 0.05);
+        g.gain.linearRampToValueAtTime(0.05, now + 0.4);
+        g.gain.exponentialRampToValueAtTime(0.001, now + 2.2);
+        osc.connect(g).connect(master);
+        osc.start(now);
+        osc.stop(now + 2.3);
+    });
+
+    // 3) Batida de bumbo da torcida (ritmo)
+    for (let i = 0; i < 4; i++) {
+        const t = now + 0.15 + i * 0.32;
+        const kick = ctx.createOscillator();
+        kick.frequency.setValueAtTime(150, t);
+        kick.frequency.exponentialRampToValueAtTime(50, t + 0.15);
+        const kg = ctx.createGain();
+        kg.gain.setValueAtTime(0.5, t);
+        kg.gain.exponentialRampToValueAtTime(0.001, t + 0.2);
+        kick.connect(kg).connect(master);
+        kick.start(t);
+        kick.stop(t + 0.25);
+    }
+}
+
+// Vaia da arquibancada — "buuuu" de decepção
+function playBoo() {
+    const ctx = getAudioCtx();
+    if (!ctx) return;
+    const now = ctx.currentTime;
+    const master = ctx.createGain();
+    master.gain.value = 0.8;
+    master.connect(ctx.destination);
+
+    // Multidão grave e abafada, descendo de tom (decepção)
+    const noise = ctx.createBufferSource();
+    noise.buffer = getNoiseBuffer(ctx);
+    noise.loop = true;
+    const lp = ctx.createBiquadFilter();
+    lp.type = 'lowpass';
+    lp.frequency.setValueAtTime(700, now);
+    lp.frequency.exponentialRampToValueAtTime(250, now + 1.4);
+    const g = ctx.createGain();
+    g.gain.setValueAtTime(0.001, now);
+    g.gain.exponentialRampToValueAtTime(0.6, now + 0.25);
+    g.gain.setValueAtTime(0.6, now + 0.9);
+    g.gain.exponentialRampToValueAtTime(0.001, now + 1.9);
+    noise.connect(lp).connect(g).connect(master);
+    noise.start(now);
+    noise.stop(now + 2.0);
+
+    // Vozes graves "boooo" caindo de tom
+    [140, 170, 110].forEach((f, i) => {
+        const osc = ctx.createOscillator();
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(f, now + i * 0.04);
+        osc.frequency.exponentialRampToValueAtTime(f * 0.65, now + 1.5);
+        const og = ctx.createGain();
+        og.gain.setValueAtTime(0.001, now);
+        og.gain.exponentialRampToValueAtTime(0.18, now + 0.3);
+        og.gain.exponentialRampToValueAtTime(0.001, now + 1.7);
+        osc.connect(og).connect(master);
+        osc.start(now);
+        osc.stop(now + 1.8);
+    });
+}
+
+// Som de prémio / dinheiro ganho — sino brilhante ascendente + brilho
+function playWinChime() {
+    const ctx = getAudioCtx();
+    if (!ctx) return;
+    const now = ctx.currentTime;
+    const master = ctx.createGain();
+    master.gain.value = 0.55;
+    master.connect(ctx.destination);
+
+    // Arpejo alegre (acorde maior ascendente) com timbre de sino
+    const notes = [1046.5, 1318.5, 1568, 2093]; // C6 E6 G6 C7
+    notes.forEach((f, i) => {
+        const t = now + i * 0.08;
+        const osc = ctx.createOscillator();
+        osc.type = 'triangle';
+        osc.frequency.value = f;
+        const og = ctx.createGain();
+        og.gain.setValueAtTime(0.001, t);
+        og.gain.exponentialRampToValueAtTime(0.5, t + 0.02);
+        og.gain.exponentialRampToValueAtTime(0.001, t + 0.9);
+        osc.connect(og).connect(master);
+        osc.start(t);
+        osc.stop(t + 1.0);
+        // Harmónico agudo (brilho de moeda)
+        const shimmer = ctx.createOscillator();
+        shimmer.type = 'sine';
+        shimmer.frequency.value = f * 2;
+        const sg = ctx.createGain();
+        sg.gain.setValueAtTime(0.001, t);
+        sg.gain.exponentialRampToValueAtTime(0.12, t + 0.02);
+        sg.gain.exponentialRampToValueAtTime(0.001, t + 0.5);
+        shimmer.connect(sg).connect(master);
+        shimmer.start(t);
+        shimmer.stop(t + 0.6);
+    });
+
+    // Faísca final de moedas (tilintar)
+    for (let i = 0; i < 6; i++) {
+        const t = now + 0.32 + i * 0.05;
+        const osc = ctx.createOscillator();
+        osc.type = 'sine';
+        osc.frequency.value = 2600 + Math.random() * 1800;
+        const og = ctx.createGain();
+        og.gain.setValueAtTime(0.001, t);
+        og.gain.exponentialRampToValueAtTime(0.1, t + 0.01);
+        og.gain.exponentialRampToValueAtTime(0.001, t + 0.18);
+        osc.connect(og).connect(master);
+        osc.start(t);
+        osc.stop(t + 0.2);
+    }
+}
+
+// Compatibilidade: o antigo cashSound.play() agora dispara o novo prémio
+const cashSound = { play: () => { playWinChime(); return Promise.resolve(); }, currentTime: 0 };
 
 const appContent = document.getElementById('app-content');
 const earningsContainer = document.getElementById('earnings-container');
@@ -548,8 +719,8 @@ window.shootAtTarget = (zone) => {
             // Vibrar a rede
             if (net) net.classList.add('net-shake');
             
-            // Som real de estádio
-            // if (typeof cheerSound !== 'undefined') cheerSound.cloneNode().play().catch(() => {});
+            // Rugido da torcida — GOOOAL!
+            playGoalRoar();
             
             const float = document.createElement('div');
             float.classList.add('money-float');
@@ -562,7 +733,8 @@ window.shootAtTarget = (zone) => {
             updateHeader();
         } else {
             resultText.innerHTML = `<span style="color: var(--danger); font-size: 1.1rem;">🧤 GRANDE DEFESA! O guarda-redes voou!</span>`;
-            // (sem vaias disponíveis de alta qualidade)
+            // Vaia da arquibancada
+            playBoo();
         }
         
         setTimeout(() => {
@@ -584,6 +756,8 @@ window.shootAtTarget = (zone) => {
 };
 
 function showPenaltySuccess() {
+    // Som de prémio ao concluir o desafio
+    playWinChime();
     appContent.innerHTML = `
         <div class="card-content animate-entry">
             <span style="font-size:3rem; margin-bottom:10px;">🏆</span>
@@ -830,8 +1004,8 @@ window.simulateMatch = () => {
 };
 
 function playGoalSound() {
-    // Festejo real da claque
-    // if (typeof cheerSound !== 'undefined') cheerSound.cloneNode().play().catch(() => {});
+    // Festejo da torcida — GOOOAL!
+    playGoalRoar();
 }
 
 function finishMatchSimulation() {
@@ -851,6 +1025,9 @@ function finishMatchSimulation() {
     
     earnings += gained;
     updateHeader();
+
+    // Som de prémio ao ganhar
+    playWinChime();
     
     appContent.innerHTML = `
         <div class="card-content animate-entry">
